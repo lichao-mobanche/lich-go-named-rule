@@ -40,6 +40,7 @@ func (g *Group) LoadTage(t tageName, r interface{}) (tageName, interface{}){
 			make(map[arrow]tageName),
 		}
 		g.graph.Join(t,t)
+		g.setStatus(false)
 		return t, r
 	}
 	old:=g.tags[t]
@@ -61,11 +62,16 @@ func (g Group) GetTage(t tageName) (r interface{}) {
 
 func (g *Group) rebuild() {
 	new := unionset.NewUnionset()
+	defects := false
 	for tn, tag := range g.tags {
 		for _, st := range tag.nextTages {
 			new.Join(tn, st)
+			if _, ok := g.tags[st]; !ok{
+				defects=true
+			}
 		}
 	}
+	g.setStatus(defects)
 	g.graph=new
 }
 
@@ -77,7 +83,18 @@ func (g *Group) RemoveTage(t tageName){
 		g.rebuild()
 	}
 }
-
+func (g *Group) setStatus(detective bool) {
+	if detective {
+		g.status=Incomplete
+		return
+	}
+	l:=g.graph.GetGroupNumber()
+	if l==1{
+		g.status=Complete
+	} else if l>1{
+		g.status=Incomplete
+	}
+}
 func (g *Group) LoadSubTage(t tageName, a arrow, st tageName) (tageName, arrow, tageName) {
 	g.Lock()
 	defer g.Unlock()
@@ -88,10 +105,11 @@ func (g *Group) LoadSubTage(t tageName, a arrow, st tageName) (tageName, arrow, 
 		}
 		tag.nextTages[a]=st
 		g.graph.Join(t,st)
+		_, ok :=g.tags[st]
+		g.setStatus(!ok)
 		return t, a, resst
-	}else{
-		return "", "", ""
 	}
+	return "", "", ""
 }
 
 func (g *Group) RemoveSubTage(t tageName, a arrow){
