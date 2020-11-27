@@ -1,8 +1,8 @@
 package cabinet
 
 import (
-	"sync"
 	"github.com/lichao-mobanche/lich-go-named-rule/pkg/unionset"
+	"sync"
 )
 
 type groupName = string
@@ -10,9 +10,10 @@ type tageName = string
 type arrow = string
 type rule interface{}
 type tage struct {
-	rule rule
+	rule      rule
 	nextTages map[arrow]tageName
 }
+
 // NewGroup TODO
 func NewGroup(gname groupName) *Group {
 	if gname == "" {
@@ -23,15 +24,15 @@ func NewGroup(gname groupName) *Group {
 
 // Group TODO
 type Group struct {
-	gname groupName
-	tags map[tageName]tage
-	graph *unionset.UnionSet
+	gname  groupName
+	tags   map[tageName]tage
+	graph  *unionset.UnionSet
 	status Status
 	*sync.RWMutex
 }
 
 // LoadTage creates a new Group
-func (g *Group) LoadTage(t tageName, r interface{}) (tageName, interface{}){
+func (g *Group) LoadTage(t tageName, r interface{}) (tageName, interface{}) {
 	g.Lock()
 	defer g.Unlock()
 	if _, ok := g.tags[t]; !ok {
@@ -39,12 +40,12 @@ func (g *Group) LoadTage(t tageName, r interface{}) (tageName, interface{}){
 			r,
 			make(map[arrow]tageName),
 		}
-		g.graph.Join(t,t)
+		g.graph.Join(t, t)
 		g.setStatus(false)
 		return t, r
 	}
-	old:=g.tags[t]
-	g.tags[t]= tage{
+	old := g.tags[t]
+	g.tags[t] = tage{
 		r,
 		old.nextTages,
 	}
@@ -55,7 +56,7 @@ func (g Group) GetTage(t tageName) (r interface{}) {
 	g.RLock()
 	defer g.RUnlock()
 	if tag, ok := g.tags[t]; ok {
-		r=tag.rule
+		r = tag.rule
 	}
 	return
 }
@@ -66,16 +67,16 @@ func (g *Group) rebuild() {
 	for tn, tag := range g.tags {
 		for _, st := range tag.nextTages {
 			new.Join(tn, st)
-			if _, ok := g.tags[st]; !ok{
-				defects=true
+			if _, ok := g.tags[st]; !ok {
+				defects = true
 			}
 		}
 	}
 	g.setStatus(defects)
-	g.graph=new
+	g.graph = new
 }
 
-func (g *Group) RemoveTage(t tageName){
+func (g *Group) RemoveTage(t tageName) {
 	g.Lock()
 	defer g.Unlock()
 	if _, ok := g.tags[t]; ok {
@@ -85,34 +86,34 @@ func (g *Group) RemoveTage(t tageName){
 }
 func (g *Group) setStatus(detective bool) {
 	if detective {
-		g.status=Incomplete
+		g.status = Incomplete
 		return
 	}
-	l:=g.graph.GetGroupNumber()
-	if l==1{
-		g.status=Complete
-	} else if l>1{
-		g.status=Incomplete
+	l := g.graph.GetGroupNumber()
+	if l == 1 {
+		g.status = Complete
+	} else if l > 1 {
+		g.status = Incomplete
 	}
 }
 func (g *Group) LoadSubTage(t tageName, a arrow, st tageName) (tageName, arrow, tageName) {
 	g.Lock()
 	defer g.Unlock()
 	if tag, ok := g.tags[t]; ok {
-		resst:=st
+		resst := st
 		if _, ok := tag.nextTages[a]; ok {
-			resst=tag.nextTages[a]
+			resst = tag.nextTages[a]
 		}
-		tag.nextTages[a]=st
-		g.graph.Join(t,st)
-		_, ok :=g.tags[st]
+		tag.nextTages[a] = st
+		g.graph.Join(t, st)
+		_, ok := g.tags[st]
 		g.setStatus(!ok)
 		return t, a, resst
 	}
 	return "", "", ""
 }
 
-func (g *Group) RemoveSubTage(t tageName, a arrow){
+func (g *Group) RemoveSubTage(t tageName, a arrow) {
 	g.Lock()
 	defer g.Unlock()
 	if tag, ok := g.tags[t]; ok {
@@ -125,15 +126,15 @@ func (g Group) GetSubTag(t tageName) interface{} {
 	g.RLock()
 	defer g.RUnlock()
 	res := Result{}
-	if t != ""{
-		tag, ok := g.tags[t];
+	if t != "" {
+		tag, ok := g.tags[t]
 		if !ok {
 			return nil
-		} 
-		res[t]=tag.nextTages
+		}
+		res[t] = tag.nextTages
 	} else {
 		for k, tag := range g.tags {
-			res[k]=tag.nextTages
+			res[k] = tag.nextTages
 		}
 	}
 	return res
@@ -144,7 +145,7 @@ func (g Group) CheckNextTage(t tageName, a arrow) tageName {
 		if next, ok := tag.nextTages[a]; ok {
 			return next
 		}
-	} 
+	}
 	return ""
 }
 
@@ -158,8 +159,8 @@ func (g *Group) LoadGroupRule(r interface{}) interface{} {
 		}
 		return r
 	}
-	old:=g.tags[GroupTag]
-	g.tags[GroupTag]= tage{
+	old := g.tags[GroupTag]
+	g.tags[GroupTag] = tage{
 		r,
 		nil,
 	}
@@ -182,9 +183,9 @@ func (g *Group) RemoveGroupRule() {
 func (g *Group) GroupInfo() Result {
 	g.RLock()
 	defer g.RUnlock()
-	res:=Result{}
-	res["status"]=g.status
-	res["graph"]=g.graph.GetGroups()
+	res := Result{}
+	res["status"] = g.status
+	res["graph"] = g.graph.GetGroups()
 	return res
 }
 
@@ -206,18 +207,18 @@ func (c Cabinet) Size() int {
 func (c *Cabinet) LoadGroup(group *Group) groupName {
 	c.Lock()
 	defer c.Unlock()
-	c.unit[group.gname]=group
+	c.unit[group.gname] = group
 	return group.gname
 }
 
 func (c *Cabinet) RemoveGroup(g groupName) groupName {
 	c.Lock()
 	defer c.Unlock()
-	res:=""
+	res := ""
 	if _, ok := c.unit[g]; ok {
 		delete(c.unit, g)
 		c.size--
-		res=g
+		res = g
 	}
 	return res
 }

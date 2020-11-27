@@ -16,6 +16,6 @@ func TestCabinetRemove(t *testing.T) {
 
 }
 
-func TestGroupLoadTage(t *testing.T){
-	
+func TestGroupLoadTage(t *testing.T) {
+
 }
