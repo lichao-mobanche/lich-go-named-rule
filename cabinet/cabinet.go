@@ -52,6 +52,10 @@ func (g *Group) LoadTage(t tageName, r interface{}) (tageName, interface{}) {
 	return t, old.rule
 }
 
+func (g Group) GetGroupName() string {
+	return g.gname
+}
+
 func (g Group) GetTage(t tageName) (r interface{}) {
 	g.RLock()
 	defer g.RUnlock()
@@ -189,6 +193,16 @@ func (g *Group) GroupInfo() Result {
 	return res
 }
 
+func (g Group) Iter(f IterFunc) {
+	g.RLock()
+	defer g.RUnlock()
+	for k, v := range g.tags {
+		if !f(k, v) {
+			break
+		}
+	}
+}
+
 func NewCabinet() *Cabinet {
 	return &Cabinet{make(map[groupName]*Group), 0, &sync.RWMutex{}}
 }
@@ -230,4 +244,14 @@ func (c Cabinet) GetGroup(g groupName) *Group {
 		return group
 	}
 	return nil
+}
+
+func (c Cabinet) Iter(f IterFunc) {
+	c.RLock()
+	defer c.RUnlock()
+	for k, v := range c.unit {
+		if !f(k, v) {
+			break
+		}
+	}
 }

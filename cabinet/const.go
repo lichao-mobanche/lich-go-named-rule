@@ -15,3 +15,6 @@ type Result map[string]interface{}
 
 // GroupTag is a special tageName, which use to storage group rule
 const GroupTag = "_GroupTag_"
+
+// IterFunc TODO
+type IterFunc func(string, interface{}) bool
