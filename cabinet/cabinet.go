@@ -126,7 +126,7 @@ func (g *Group) RemoveSubTage(t tageName, a arrow) {
 	}
 }
 
-func (g Group) GetSubTag(t tageName) interface{} {
+func (g Group) GetSubTag(t tageName) Result {
 	g.RLock()
 	defer g.RUnlock()
 	res := Result{}
